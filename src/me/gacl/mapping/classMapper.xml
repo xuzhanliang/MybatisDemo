@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">  
+
+	
+<!-- 为这个mapper制定一个唯一的namespace，习惯上设置为包名+sql映射文件名 -->
+
+<mapper namespace ="me.gacl.mapping.classMapper">
+
+<!-- 
+		方式一：嵌套结果：使用嵌套结果映射来处理重复的联合结果的子集，封装联表查询的数据（去除重复的数据）
+		select * from class c , teacher t where c.teacher_id = t.t_id and c.c_id=1
+ -->
+ 	<select id="getClass" parameterType="int" resultMap="ClassResultMap">
+ 		select * from class c , teacher t where c.teacher_id = t.t_id and c.c_id=#{id}
+ 	</select>
+ 	<resultMap type="me.gacl.domain.Classes" id="ClassResultMap">
+ 		<id property="id" column="c_id"/>
+ 		<result property="name" column="c_name"/>
+ 		<association property="teacher" javaType="me.gacl.domain.Teacher">
+ 			<id property="id" column="t_id"/>
+ 			<result property="name" column="t_name"/>
+ 		</association>
+ 	</resultMap>
+ 	
+ 	<!-- 
+ 		方式二：嵌套查询：通过执行另一个SQL映射语句来返回预期的复杂类型
+ 		select * from class where c_id=1;
+ 		select * from teacher where t_id=1
+ 	
+ 	 -->
+ 	 <select id="getClass2" parameterType="int" resultMap="ClassResultMap2">
+ 	 	select * from class where c_id=#{id}
+ 	 </select>
+ 	 <resultMap type="me.gacl.domain.Classes" id="ClassResultMap2">
+ 	 	<id property="id" column="c_id"/>
+ 		<result property="name" column="c_name"/>
+ 		<association property="teacher" column="teacher_id" select="getTeacher"/>
+ 	 </resultMap>
+ 	 <select id="getTeacher" parameterType="int" resultType="me.gacl.domain.Teacher">
+ 	 select t_id id , t_name name from teacher where t_id=#{id} 
+ 	 </select>
+ 	 
+ 	 
+ 	 
+ 	 <select id="getClass3" parameterType="int" resultMap="ClassResultMap3">
+ 		select * from class c , teacher t , student s where c.teacher_id = t.t_id and c.c_id=s.class_id and c.c_id=#{id}
+ 	</select>
+ 	<resultMap type="me.gacl.domain.Classes" id="ClassResultMap3">
+ 		<id property="id" column="c_id"/>
+ 		<result property="name" column="c_name"/>
+ 		<association property="teacher" column ="teacher_id" javaType="me.gacl.domain.Teacher">
+ 			<id property="id" column="t_id"/>
+ 			<result property="name" column="t_name"/>
+ 		</association>
+ 		<collection property="students" ofType="me.gacl.domain.Student">
+ 			<id property="id" column="s_id"/>
+ 			<result property="name" column="s_name"/>
+ 		</collection>
+ 	</resultMap>
+ 	
+ 	 <select id="getClass4" parameterType="int" resultMap="ClassResultMap4">
+ 	 	select * from class where c_id=#{id}
+ 	 </select>
+ 	 <resultMap type="me.gacl.domain.Classes" id="ClassResultMap4">
+ 	 	<id property="id" column="c_id"/>
+ 		<result property="name" column="c_name"/>
+ 		<association property="teacher" column="teacher_id" javaType="me.gacl.domain.Teacher" select="getTeacher2"/>
+ 		<collection property="students" ofType="me.gacl.domain.Student" column="c_id" select="getStudent"></collection>
+ 	 </resultMap>
+ 	 
+ 	 <select id="getTeacher2" parameterType="int" resultType="me.gacl.domain.Teacher">
+ 	 select t_id id , t_name name from teacher where t_id=#{id} 
+ 	 </select>
+ 	  <select id="getStudent" parameterType="int" resultType="me.gacl.domain.Student">
+ 	 select s_id id , s_name name from student where class_id=#{id} 
+ 	 </select>
+ 
+</mapper>
